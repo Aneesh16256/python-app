@@ -34,12 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Proper Docker login with PAT (Personal Access Token)
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}  # Must be a PAT, not your account password
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -49,3 +48,4 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/python-app:latest
             ${{ secrets.DOCKER_HUB_USERNAME }}/python-app:${{ github.sha }}
+          platforms: linux/amd64,linux/arm64  # Multi-architecture support
