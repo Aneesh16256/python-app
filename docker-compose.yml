@@ -1,24 +1,35 @@
-version: '3.8'
+name: Python CI/CD
 
-services:
-  app:
-    build: .
-    ports:
-      - "8000:8000"  # Host:Container port
-    environment:
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - .:/app  # Live-reload for development
-    depends_on:
-      - db  # Remove if no database needed
+on:
+  push:
+    branches: [ main ]
 
-  # PostgreSQL example (remove if unused)
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_PASSWORD: mypassword
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest  # Add this line
+      - name: Run tests
+        run: |
+          pytest  # Or your test command
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: |
+            yourusername/python-app:latest
+          secrets: |
+            ${{ secrets.DOCKER_PASSWORD }}
