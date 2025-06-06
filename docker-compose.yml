@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"  # Host:Container port
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app  # Live-reload for development
+    depends_on:
+      - db  # Remove if no database needed
+
+  # PostgreSQL example (remove if unused)
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_PASSWORD: mypassword
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
