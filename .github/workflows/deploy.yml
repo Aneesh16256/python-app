@@ -42,11 +42,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install Docker CE with Buildx
+      - name: Install Docker with Buildx
         run: |
-          # Remove old versions
-          sudo apt-get remove -y docker docker-engine docker.io containerd runc
-          
           # Install prerequisites
           sudo apt-get update
           sudo apt-get install -y \
@@ -64,16 +61,16 @@ jobs:
             "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
             $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
           
-          # Install Docker
+          # Install Docker with Buildx
           sudo apt-get update
-          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
           
           # Configure permissions
           sudo usermod -aG docker $USER
           sudo chmod 666 /var/run/docker.sock
           sudo systemctl enable --now docker
           
-          # Verify
+          # Verify installations
           docker --version
           docker buildx version
       
