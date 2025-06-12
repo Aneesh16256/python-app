@@ -42,19 +42,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install Docker and configure permissions
+      - name: Install Docker CE with Buildx
         run: |
+          # Remove old versions
+          sudo apt-get remove -y docker docker-engine docker.io containerd runc
+          
+          # Install prerequisites
           sudo apt-get update
-          sudo apt-get install -y docker.io docker-buildx-plugin
+          sudo apt-get install -y \
+              ca-certificates \
+              curl \
+              gnupg \
+              lsb-release
+          
+          # Add Docker's official GPG key
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          
+          # Set up the repository
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          
+          # Install Docker
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+          
+          # Configure permissions
+          sudo usermod -aG docker $USER
+          sudo chmod 666 /var/run/docker.sock
           sudo systemctl enable --now docker
           
-          # Add current user to docker group
-          sudo usermod -aG docker $USER
-          
-          # Fix socket permissions (temporary until reboot)
-          sudo chmod 666 /var/run/docker.sock
-          
-          # Verify installation
+          # Verify
           docker --version
           docker buildx version
       
@@ -64,16 +83,15 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       
-      - name: Set up Docker Buildx
+      - name: Set up Docker Buildx builder
         run: |
-          # Create and use builder instance
-          sudo docker buildx create --use --name mybuilder
-          sudo docker buildx inspect --bootstrap
-          sudo docker buildx ls
+          docker buildx create --use --name mybuilder
+          docker buildx inspect --bootstrap
+          docker buildx ls
       
       - name: Build and push Docker image
         run: |
-          sudo docker buildx build \
+          docker buildx build \
             --platform linux/amd64,linux/arm64 \
             -t ${{ secrets.DOCKER_HUB_USERNAME }}/python-app:latest \
             -t ${{ secrets.DOCKER_HUB_USERNAME }}/python-app:${{ github.sha }} \
