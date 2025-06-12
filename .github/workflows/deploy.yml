@@ -33,7 +33,6 @@ jobs:
           else
             echo "::warning::No tests directory found"
             exit 0
-          fi
 
   deploy:
     runs-on: self-hosted
@@ -41,38 +40,6 @@ jobs:
     if: success()
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Docker with Buildx
-        run: |
-          # Install prerequisites
-          sudo apt-get update
-          sudo apt-get install -y \
-              ca-certificates \
-              curl \
-              gnupg \
-              lsb-release
-          
-          # Add Docker's official GPG key
-          sudo mkdir -p /etc/apt/keyrings
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-          
-          # Set up the repository
-          echo \
-            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-          
-          # Install Docker with Buildx
-          sudo apt-get update
-          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
-          
-          # Configure permissions
-          sudo usermod -aG docker $USER
-          sudo chmod 666 /var/run/docker.sock
-          sudo systemctl enable --now docker
-          
-          # Verify installations
-          docker --version
-          docker buildx version
       
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -82,7 +49,7 @@ jobs:
       
       - name: Set up Docker Buildx builder
         run: |
-          docker buildx create --use --name mybuilder
+          docker buildx create --use --name mybuilder || docker buildx use mybuilder
           docker buildx inspect --bootstrap
           docker buildx ls
       
